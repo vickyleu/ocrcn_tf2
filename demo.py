@@ -5,19 +5,17 @@ image and recognition the meaning of it
 
 """
 from alfred.dl.tf.common import mute_tf
-mute_tf()
 import os
 import cv2
 import sys
 import numpy as np
 import tensorflow as tf
-
 from alfred.utils.log import logger as logging
 import tensorflow_datasets as tfds
 from dataset.casia_hwdb import load_ds, load_characters, load_val_ds
 from models.cnn_net import CNNNet, build_net_002, build_net_003
 import glob
-
+mute_tf()
 
 target_size = 64
 characters = load_characters()

@@ -71,10 +71,16 @@ def run(p):
             hwdb = CASIAHWDBGNT(gnt)
             for img, tagcode in hwdb.get_data_iter():
                 try:
-                    # why do you need resize?
-                    w = img.shape[0]
-                    h = img.shape[1]
-                    # img = cv2.resize(img, (64, 64))
+                    # # why do you need resize?
+                    # w = img.shape[0]
+                    # h = img.shape[1]
+
+                    # TODO     fucking reshape cause,we must need resize image to 64 * 64
+
+                    img = cv2.resize(img, (64, 64))
+                    w = 64
+                    h = 64
+
                     label = struct.pack('>H', tagcode).decode('gb2312')
                     label = label.replace('\x00', '')
                     index = charset.index(label)

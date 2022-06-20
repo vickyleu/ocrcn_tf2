@@ -6,15 +6,15 @@ we using this class to get .png and label from raw
 .gnt data
 
 """
-from alfred.dl.tf.common import mute_tf
-mute_tf()
-import struct
+
 import numpy as np
 import cv2
 import tensorflow as tf
-
 import os
 
+from alfred.dl.tf.common import mute_tf
+
+mute_tf()
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     is_show_combine = False
     if is_show_combine:
-        combined = np.zeros([32*10, 32*20], dtype=np.uint8)
+        combined = np.zeros([32 * 10, 32 * 20], dtype=np.uint8)
         i = 0
         res = ''
         for data in val_ds.take(200):
@@ -102,14 +102,14 @@ if __name__ == "__main__":
             col = i % 20
             print(i, col)
             print(row, col)
-            combined[row*32: (row+1)*32, col*32: (col+1)*32] = img
+            combined[row * 32: (row + 1) * 32, col * 32: (col + 1) * 32] = img
             i += 1
             res += label
         cv2.imshow('rr', combined)
         print(res)
         cv2.imwrite('assets/combined.png', combined)
         cv2.waitKey(0)
-            # break
+        # break
     else:
         i = 0
         for data in val_ds.take(36):

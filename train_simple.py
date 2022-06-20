@@ -5,18 +5,16 @@ we got about 90% accuracy by simply applying a simple CNN net
 
 """
 from alfred.dl.tf.common import mute_tf
-mute_tf()
 import os
 import sys
 import numpy as np
 import tensorflow as tf
-
 from alfred.utils.log import logger as logging
 import tensorflow_datasets as tfds
 from dataset.casia_hwdb import load_ds, load_characters, load_val_ds
 from models.cnn_net import CNNNet, build_net_002, build_net_003
 
-
+mute_tf()
 
 target_size = 64
 num_classes = 7356
@@ -36,6 +34,13 @@ def preprocess(x):
     return x['image'], x['label']
 
 
+# loss：训练集损失值   accuracy:训练集准确率   val_loss:测试集损失值  val_accruacy:测试集准确率
+# train loss 不断下降，test loss不断下降，说明网络仍在学习;（最好的）
+# train loss 不断下降，test loss趋于不变，说明网络过拟合;（max pool或者正则化）
+# train loss 趋于不变，test loss不断下降，说明数据集100%有问题;（检查dataset）
+# train loss 趋于不变，test loss趋于不变，说明学习遇到瓶颈，需要减小学习率或批量数目;（减少学习率）
+# train loss 不断上升，test loss不断上升，说明网络结构设计不当，训练超参数设置不当，数据集经过清洗等问题。（最不好的情况）
+
 def train():
     all_characters = load_characters()
     num_classes = len(all_characters)
@@ -48,7 +53,7 @@ def train():
 
     for data in train_dataset.take(2):
         print(data)
-
+    # return
     # init model
     model = build_net_003((64, 64, 1), num_classes)
     model.summary()
@@ -78,15 +83,30 @@ def train():
             model.fit(
                 train_dataset,
                 validation_data=val_ds,
-                validation_steps=1000,
-                epochs=15000,
-                steps_per_epoch=1024,
+                validation_steps=2000,
+                epochs=200,
+                steps_per_epoch=512,
                 callbacks=callbacks)
         except KeyboardInterrupt:
             model.save_weights(ckpt_path.format(epoch=0))
             logging.info('keras model saved.')
         model.save_weights(ckpt_path.format(epoch=0))
         model.save(os.path.join(os.path.dirname(ckpt_path), 'cn_ocr.h5'))
+
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS,  # enable TensorFlow Lite ops.
+            tf.lite.OpsSet.SELECT_TF_OPS  # enable TensorFlow ops.
+        ]
+        tflite_model = converter.convert()
+        # Print the signatures from the converted model
+        interpreter = tf.lite.Interpreter(model_content=tflite_model)
+        signatures = interpreter.get_signature_list()
+        print(signatures)
+
+        with open("converted_model.tflite", "wb") as f:
+            f.write(tflite_model)
+
     else:
         loss_fn = tf.losses.SparseCategoricalCrossentropy()
         optimizer = tf.optimizers.RMSprop()
